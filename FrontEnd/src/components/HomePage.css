@@ -1,0 +1,102 @@
+/* HomePage.css */
+body, html {
+    background-color: #f8f9fa; /* Light gray background for a soft appearance */
+    color: #343a40;            /* Darker text color for contrast */
+  }
+  
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .jumbotron {
+    background-color: #ffffff; /* Pure white for hero section */
+    margin-bottom: 0;
+  }
+  
+  .carousel {
+    max-height: 400px; /* Adjust height as needed */
+    overflow: hidden;
+  }
+  
+  .carousel-inner img {
+    height: auto;
+    object-fit: cover;
+    max-height: 300px; /* Ensure consistent height across images */
+  }
+  
+  .carousel-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .col-md-3, .col-md-9 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .p-4 {
+    text-align: center;
+    max-width: 75%; /* Adjusts text box width */
+    margin: auto;
+  }
+  
+  .card {
+    border: 1px solid #dee2e6; /* Light gray border for a clean look */
+  }
+  
+  footer {
+    background-color: #ffffff; /* White background for footer */
+  }
+  
+  a {
+    color: #007bff; /* Bootstrap primary color for links */
+  }
+  
+  a:hover {
+    color: #0056b3; /* Darker shade of primary color on hover */
+  }
+  
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+  }
+  
+  .btn-outline-primary {
+    border-color: #007bff;
+  }
+  
+  .btn-outline-primary:hover {
+    background-color: #007bff;
+    color: #ffffff;
+  }
+  
+  .btn-outline-secondary {
+    border-color: #6c757d;
+  }
+  
+  .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: #ffffff;
+  }
+  
+  .navbar-nav.ml-auto {
+    margin-left: auto;
+  }
+  
+  .nav-link.btn-primary {
+    margin-right: 10px;
+  }
+  
+  .carousel-caption {
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for captions */
+    border-radius: 0.25rem; /* Rounded corners */
+  }
+  
