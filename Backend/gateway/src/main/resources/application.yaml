@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth
+          uri: lb://authservice
+          predicates:
+            - Path=/auth/**
+
+        - id: users
+          uri: lb://userservice
+          predicates:
+            - Path=/users/**
+          # filters:
+          #   - TokenValidatorFilter
