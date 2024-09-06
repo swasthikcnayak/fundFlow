@@ -60,15 +60,12 @@ public class AuthService {
         }
         Map<String, Object> claims = objectUtils.getClaims(auth);
         JWTResource jwtResource = secretService.generateToken(auth.getId().toString(),claims);
-        tokenService.saveToken(jwtResource, auth);
-        return new AuthResource(auth.getEmail(), jwtResource.getToken());
+        tokenService.saveRefreshToken(jwtResource, auth);
+        return new AuthResource(auth.getEmail(), jwtResource.getToken(), jwtResource.getRefreshToken().toString());
     }
 
     public TokenResource validateToken(String token) throws BadRequestException, AuthenticationException {
         token = objectUtils.preprocessToken(token);
-        if(!tokenService.verify(token)){
-            throw new AuthenticationException("Invalid token");
-        }
         Object payload = secretService.extractJwt(token);
         if (payload instanceof Claims) {
             TokenResource tokenResource = objectUtils.getTokenResource(objectUtils.getMapFromClaims((Claims)payload));

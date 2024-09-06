@@ -11,5 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class JWTResource {
     private String token;
-    private Date expiry;
+    private Date tokenExpiry;
+    private String refreshToken;
+    private Date refreshTokenExpiry;
 }

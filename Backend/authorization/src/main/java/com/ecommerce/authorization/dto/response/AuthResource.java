@@ -8,4 +8,5 @@ import lombok.Data;
 public class AuthResource{
     String userId;
     String token;
+    String refreshToken;
 }

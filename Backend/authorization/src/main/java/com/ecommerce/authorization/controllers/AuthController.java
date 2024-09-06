@@ -7,7 +7,6 @@ import com.ecommerce.authorization.dto.request.UserLoginRequest;
 import com.ecommerce.authorization.dto.request.UserRegistrationRequest;
 import com.ecommerce.authorization.dto.response.AuthResource;
 import com.ecommerce.authorization.dto.response.TokenResource;
-import com.ecommerce.authorization.dto.response.UserRegistrationResponse;
 import com.ecommerce.authorization.services.AuthService;
 import com.ecommerce.authorization.utils.Constants;
 

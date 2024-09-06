@@ -5,6 +5,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 import org.springframework.core.env.Environment;
@@ -27,11 +28,13 @@ public class SecretService {
 
     private JwtParser jwtParser;
 
-    private SecretKey signInKey;
+    private SecretKey jwtSignInKey;
 
-    private long expiration;
+    private long jwtExpiration;
 
     private int passwordStrength;
+
+    private long refreshExpiration;
 
     public SecretService(Environment environment) {
         this.environment = environment;
@@ -46,16 +49,19 @@ public class SecretService {
     public JWTResource generateToken(
             String userId,
             Map<String, Object> claims) {
-                Date current = new Date();
-                Date expiry = new Date(current.getTime() + this.expiration);
-        return new JWTResource(Jwts
+        Date current = new Date();
+        Date expiry = new Date(current.getTime() + this.jwtExpiration);
+        String refreshToken = UUID.randomUUID().toString();
+        Date refreshTokenExpiry = new Date(current.getTime() + this.refreshExpiration);
+        String jwtToken = Jwts
                 .builder()
                 .claims(claims)
                 .subject(userId)
                 .issuedAt(current)
                 .expiration(expiry)
-                .signWith(this.signInKey)
-                .compact(), expiry);
+                .signWith(this.jwtSignInKey)
+                .compact();
+        return new JWTResource(jwtToken, expiry, refreshToken, refreshTokenExpiry);
     }
 
     private Object extractToken(JwtParser parser, String jwtToken) {
@@ -75,19 +81,22 @@ public class SecretService {
         return encodedPassword;
     }
 
-    public boolean comparePassword(String password, String hash){
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(this.passwordStrength, new SecureRandom());
+    public boolean comparePassword(String password, String hash) {
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(this.passwordStrength,
+                new SecureRandom());
         return bCryptPasswordEncoder.matches(password, hash);
     }
 
     private void initJwt() {
-        this.expiration = Long.parseLong(Objects.requireNonNull(environment.getProperty(Constants.JWT_EXIPIY)));
-        String secret = Objects.requireNonNull(environment.getProperty(Constants.JWT_SECRET_KEY));
-        byte[] secretBytes = Base64.getEncoder().encode(secret.getBytes());
-        this.signInKey = Keys.hmacShaKeyFor(secretBytes);
+        this.jwtExpiration = Long.parseLong(Objects.requireNonNull(environment.getProperty(Constants.JWT_EXIPIY)));
+        String jwtSecret = Objects.requireNonNull(environment.getProperty(Constants.JWT_SECRET_KEY));
+        byte[] secretBytes = Base64.getEncoder().encode(jwtSecret.getBytes());
+        this.jwtSignInKey = Keys.hmacShaKeyFor(secretBytes);
         this.jwtParser = Jwts.parser()
-                .verifyWith(this.signInKey)
+                .verifyWith(this.jwtSignInKey)
                 .build();
+        this.refreshExpiration = Long
+                .parseLong(Objects.requireNonNull(environment.getProperty(Constants.REFRESH_EXPIRY)));
     }
 
     private void initPasswordConfig() {

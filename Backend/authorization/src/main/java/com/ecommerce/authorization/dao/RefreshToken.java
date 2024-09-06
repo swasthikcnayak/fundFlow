@@ -10,21 +10,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name="tokens")
-public class Token {
+@Table(name="refresh_token")
+public class RefreshToken {
 
     @Id
     @Length(max = 300) 
-    @Column(name="TOKEN", unique = true, nullable = false)
+    @Column(name="REFRESH_TOKEN", unique = true, nullable = false)
     private String token;
 
 
