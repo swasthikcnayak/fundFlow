@@ -5,7 +5,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.authorization.dto.request.UserLoginRequest;
 import com.ecommerce.authorization.dto.request.UserRegistrationRequest;
-import com.ecommerce.authorization.dto.response.AuthResource;
+import com.ecommerce.authorization.dto.response.LoginResource;
+import com.ecommerce.authorization.dto.response.RefreshResponse;
 import com.ecommerce.authorization.dto.response.TokenResource;
 import com.ecommerce.authorization.services.AuthService;
 import com.ecommerce.authorization.utils.Constants;
@@ -36,10 +37,17 @@ public class AuthController {
         return new ResponseEntity<TokenResource>(userInfo, HttpStatus.OK);
     }
 
+    @PostMapping(name="refreshToken", value = "/refresh", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+    public ResponseEntity<RefreshResponse> refresh(@RequestHeader(Constants.AUTHORIZATION_HEADER) String authorization, @RequestHeader(Constants.REFRESH_HEADER) String refreshToken) {
+        RefreshResponse response = authService.refreshToken(authorization, refreshToken);
+        return new ResponseEntity<RefreshResponse>(response, HttpStatus.OK);
+    }
+    
+
     @PostMapping(name="login", value = "/login", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-    public ResponseEntity<AuthResource> login(@Valid @RequestBody UserLoginRequest loginRequest) throws AuthenticationException {
-        AuthResource resource = authService.login(loginRequest);
-        return new ResponseEntity<AuthResource>(resource, HttpStatus.OK);
+    public ResponseEntity<LoginResource> login(@Valid @RequestBody UserLoginRequest loginRequest) throws AuthenticationException {
+        LoginResource resource = authService.login(loginRequest);
+        return new ResponseEntity<LoginResource>(resource, HttpStatus.OK);
     }
     
     @PostMapping(name="register", value="/register", produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})

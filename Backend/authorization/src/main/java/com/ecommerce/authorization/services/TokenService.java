@@ -2,6 +2,7 @@ package com.ecommerce.authorization.services;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,37 +19,31 @@ import jakarta.ws.rs.InternalServerErrorException;
 public class TokenService {
     
     @Autowired
-    RefreshTokenRepository tokenRepository;
-
-    @Autowired
-    RedisService redisService;
+    private RefreshTokenRepository refreshTokenRepository;
 
     public void saveRefreshToken(JWTResource jwtResource, AuthInfo authInfo){
         CompletableFuture<Void> tokenSaveFuture= CompletableFuture.runAsync(()-> {
             RefreshToken token = new RefreshToken(jwtResource.getRefreshToken().toString(), authInfo.getId(), jwtResource.getRefreshTokenExpiry());
-            redisService.setValue(jwtResource.getRefreshToken(), jwtResource.getRefreshTokenExpiry());
-            tokenRepository.save(token);
+            refreshTokenRepository.save(token);
          });
          tokenSaveFuture = tokenSaveFuture.exceptionally((ex)->{
             throw new InternalServerErrorException(ex);
          });
     }
 
-    public boolean verifyRefreshToken(String refreshToken){
-        Object value = redisService.getValue(refreshToken);
-        if(value == null){
-            Optional<RefreshToken> dbToken = tokenRepository.findById(refreshToken);
+    public boolean verifyRefreshToken(String authUserId, String refreshToken){
+            Optional<RefreshToken> dbToken = refreshTokenRepository.findById(refreshToken);
             if(!dbToken.isPresent()){
-                return false;
+                throw new AuthenticationException("Invalid refresh token");
             }
-        }
-        if(value instanceof Date){
-            Date tokenExpiry = (Date)value;
-             if(tokenExpiry.before(new Date())){
-                throw new AuthenticationException("Token expired");
+            UUID userId = dbToken.get().getId();
+            Date expiry = dbToken.get().getExpiry();
+            if(!userId.toString().equals(authUserId)){
+                throw new AuthenticationException("Token ownership is invalid");
+            }
+            if(expiry.before(new Date())){
+                throw new AuthenticationException("Refresh token expired");
             }
             return true;
-        }
-        return false;
     }
 }

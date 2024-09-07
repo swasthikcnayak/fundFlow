@@ -11,7 +11,8 @@ import com.ecommerce.authorization.dao.projections.AuthInfo;
 import com.ecommerce.authorization.dto.JWTResource;
 import com.ecommerce.authorization.dto.request.UserLoginRequest;
 import com.ecommerce.authorization.dto.request.UserRegistrationRequest;
-import com.ecommerce.authorization.dto.response.AuthResource;
+import com.ecommerce.authorization.dto.response.LoginResource;
+import com.ecommerce.authorization.dto.response.RefreshResponse;
 import com.ecommerce.authorization.dto.response.TokenResource;
 import com.ecommerce.authorization.repository.UserRepository;
 import com.ecommerce.authorization.utils.ObjectUtils;
@@ -23,16 +24,16 @@ import io.jsonwebtoken.Claims;
 public class AuthService {
 
     @Autowired
-    SecretService secretService;
+    private SecretService secretService;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ObjectUtils objectUtils;
+    private ObjectUtils objectUtils;
 
     @Autowired
-    TokenService tokenService;
+    private TokenService tokenService;
 
     public void register(UserRegistrationRequest registrationRequest) throws BadRequestException {
         String passwordHash = this.secretService.getPasswordHash(registrationRequest.getPassword());
@@ -49,7 +50,7 @@ public class AuthService {
         }
     }
 
-    public AuthResource login(UserLoginRequest userLoginRequest) throws AuthenticationException{
+    public LoginResource login(UserLoginRequest userLoginRequest) throws AuthenticationException{
         AuthInfo auth = userRepository.findOneByEmailAndIsVerified(userLoginRequest.getEmail(), true);
         if(auth == null){
             throw new AuthenticationException("Wrong email/password or email not verified");
@@ -58,10 +59,10 @@ public class AuthService {
         if(isValid == false){
             throw new AuthenticationException("Wrong email/password");
         }
-        Map<String, Object> claims = objectUtils.getClaims(auth);
+        Map<String, Object> claims = objectUtils.getClaims(auth.getEmail());
         JWTResource jwtResource = secretService.generateToken(auth.getId().toString(),claims);
         tokenService.saveRefreshToken(jwtResource, auth);
-        return new AuthResource(auth.getEmail(), jwtResource.getToken(), jwtResource.getRefreshToken().toString());
+        return new LoginResource(auth.getEmail(), jwtResource.getToken(), jwtResource.getRefreshToken().toString());
     }
 
     public TokenResource validateToken(String token) throws BadRequestException, AuthenticationException {
@@ -75,6 +76,16 @@ public class AuthService {
             return tokenResource;
         }
         throw new BadRequestException("Invalid token");
+    }
+
+    public RefreshResponse refreshToken(String token, String refreshToken) throws BadRequestException, AuthenticationException {
+        TokenResource tokenResource = this.validateToken(token);
+        if(tokenService.verifyRefreshToken(tokenResource.getId(), refreshToken)){
+            Map<String, Object> claims = objectUtils.getClaims(tokenResource.getEmail());
+            JWTResource jwtResource = secretService.generateToken(tokenResource.getId(), claims);
+            return new RefreshResponse(tokenResource.getId(), jwtResource.getToken());
+        }
+        throw new AuthenticationException("Invalid refresh token");
     }
 
 }

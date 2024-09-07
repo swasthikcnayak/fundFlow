@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 
 import org.springframework.stereotype.Component;
 
-import com.ecommerce.authorization.dao.projections.AuthInfo;
 import com.ecommerce.authorization.dto.response.TokenResource;
 import com.ecommerce.authorization.utils.errors.BadRequestException;
 
@@ -16,9 +15,9 @@ import io.jsonwebtoken.Claims;
 @Component
 public class ObjectUtils {
 
-    public Map<String, Object> getClaims(AuthInfo userInfo) {
+    public Map<String, Object> getClaims(String email) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put(Constants.EMAIL_TOKEN, userInfo.getEmail());
+        claims.put(Constants.EMAIL_TOKEN, email);
         return claims;
     }
 
