@@ -7,9 +7,9 @@ spring:
           predicates:
             - Path=/auth/**
 
-        - id: users
-          uri: lb://userservice
-          predicates:
-            - Path=/users/**
+        # - id: users
+        #   uri: lb://userservice
+        #   predicates:
+        #     - Path=/users/**
           # filters:
           #   - TokenValidatorFilter

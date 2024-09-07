@@ -1,6 +1,8 @@
 package com.ecommerce.authorization.dto.response;
 
+import lombok.Data;
 
+@Data
 public class LoginResource extends RefreshResponse{
     String refreshToken;
 
