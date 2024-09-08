@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Pattern.Flag;
 import lombok.Data;
 
 @Data
-public class UserLoginRequest{
+public class UserLoginRequest {
 
     @NotNull(message = "The email is required")
     @NotEmpty(message = "The email address should not be empty")
@@ -17,6 +17,6 @@ public class UserLoginRequest{
 
     @NotNull(message = "The password is required")
     @NotEmpty(message = "Password should not be empty")
-    @Size(min=8, max=16)
+    @Size(min = 8, max = 16)
     String password;
 }

@@ -7,7 +7,7 @@ public interface Constants {
     public static final String JWT_SECRET_KEY = "token.secret";
     public static final String JWT_EXIPIY = "token.expiry";
     public static final String REFRESH_EXPIRY = "refresh.expiry";
-    public static final String PASSWORD_STRENGTH="password.strength";
+    public static final String PASSWORD_STRENGTH = "password.strength";
     public static final String EMAIL_TOKEN = "email";
     public static final String SUBJECT_TOKEN = "sub";
     public static final String EXPIRY_TOKEN = "exp";

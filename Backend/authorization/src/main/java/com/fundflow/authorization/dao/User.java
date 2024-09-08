@@ -19,15 +19,15 @@ import lombok.Getter;
 @Getter
 @Builder
 @Entity
-@Table(name="users")
+@Table(name = "users")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name="USER_ID", unique = true)
+    @Column(name = "USER_ID", unique = true)
     private UUID id;
 
-    @Column(name="EMAIL", nullable = false, unique = true)
+    @Column(name = "EMAIL", nullable = false, unique = true)
     private String email;
 
     @Column(name = "PASSWORD_HASH", nullable = false)
@@ -38,15 +38,15 @@ public class User {
     private Boolean isVerified = false;
 
     @Builder.Default
-    @Column(name="LAST_LOGGED_IN", nullable = true)
+    @Column(name = "LAST_LOGGED_IN", nullable = true)
     private Date lastLoggedIn = null;
 
     @CreationTimestamp(source = SourceType.DB)
-    @Column(name="CREATED_AT", nullable = false)
+    @Column(name = "CREATED_AT", nullable = false)
     private Instant createdAt;
 
     @UpdateTimestamp(source = SourceType.DB)
-    @Column(name="UPDATED_AT", nullable = false)
+    @Column(name = "UPDATED_AT", nullable = false)
     private Instant updatedAt;
 
 }

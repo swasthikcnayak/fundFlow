@@ -20,10 +20,11 @@ import com.fundflow.authorization.utils.errors.AuthenticationException;
 import com.fundflow.authorization.utils.errors.BadRequestException;
 
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class AuthService {
-
     @Autowired
     private SecretService secretService;
 
@@ -41,12 +42,11 @@ public class AuthService {
         User user = User.builder()
             .email(registrationRequest.getEmail().toLowerCase())
             .password(passwordHash)
-            .isVerified(false)
-            .lastLoggedIn(null)
             .build();
         try{ 
             user = this.userRepository.save(user);
         }catch(Exception e){
+            log.error("Account already exists", e);
             throw new BadRequestException("Account already exists");
         }
     }
@@ -54,10 +54,12 @@ public class AuthService {
     public LoginResource login(UserLoginRequest userLoginRequest) throws AuthenticationException{
         AuthInfo auth = userRepository.findOneByEmailAndIsVerified(userLoginRequest.getEmail(), true);
         if(auth == null){
+            log.warn("AuthInfo not found");
             throw new AuthenticationException("Wrong email/password or email not verified");
         }
         boolean isValid = secretService.comparePassword(userLoginRequest.getPassword(), auth.getPassword());
         if(isValid == false){
+            log.warn("Password mismatch");
             throw new AuthenticationException("Wrong email/password");
         }
         Map<String, Object> claims = objectUtils.getClaims(auth.getEmail());
@@ -72,10 +74,12 @@ public class AuthService {
         if (payload instanceof Claims) {
             TokenResource tokenResource = objectUtils.getTokenResource(objectUtils.getMapFromClaims((Claims)payload));
             if(tokenResource.getExpiry().before(new Date())){
+                log.error("Expired taken expiry date: "+tokenResource.getExpiry());
                 throw new AuthenticationException("Expired token");
             }
             return tokenResource;
         }
+        log.warn("Token is invalid");
         throw new BadRequestException("Invalid token");
     }
 
@@ -86,6 +90,7 @@ public class AuthService {
             JWTResource jwtResource = secretService.generateToken(tokenResource.getId(), claims);
             return new RefreshResponse(tokenResource.getId(), jwtResource.getToken());
         }
+        log.warn("Token is invalid");
         throw new AuthenticationException("Invalid refresh token");
     }
 

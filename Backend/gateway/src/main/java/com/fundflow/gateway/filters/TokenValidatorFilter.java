@@ -76,7 +76,7 @@ public class TokenValidatorFilter extends AbstractGatewayFilterFactory<TokenVali
         exchange.getResponse().setRawStatusCode(e.getStatusCode());
         ErrorResponseBody errorBody = new ErrorResponseBody(e);
         String errorMessage = convertObjectToJsonString(errorBody);
-        if(errorMessage == null){
+        if (errorMessage == null) {
             return Mono.error(e);
         }
         byte[] bytes = errorMessage.getBytes();

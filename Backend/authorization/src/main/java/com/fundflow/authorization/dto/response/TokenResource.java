@@ -1,6 +1,5 @@
 package com.fundflow.authorization.dto.response;
 
-
 import java.util.Date;
 
 import lombok.Builder;

@@ -8,19 +8,27 @@ import java.util.Objects;
 import java.util.UUID;
 
 import javax.crypto.SecretKey;
+
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.fundflow.authorization.dto.JWTResource;
 import com.fundflow.authorization.utils.Constants;
-import com.fundflow.authorization.utils.errors.BadRequestException;
+import com.fundflow.authorization.utils.errors.AuthenticationException;
+import com.fundflow.authorization.utils.errors.InternalException;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
+import io.jsonwebtoken.security.WeakKeyException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class SecretService {
 
@@ -39,10 +47,9 @@ public class SecretService {
     public SecretService(Environment environment) {
         this.environment = environment;
         this.initJwt();
-        this.initPasswordConfig();
     }
 
-    public Object extractJwt(String token) {
+    public Object extractJwt(String token) throws AuthenticationException {
         return this.extractToken(this.jwtParser, token);
     }
 
@@ -64,13 +71,17 @@ public class SecretService {
         return new JWTResource(jwtToken, expiry, refreshToken, refreshTokenExpiry);
     }
 
-    private Object extractToken(JwtParser parser, String jwtToken) {
+    private Object extractToken(JwtParser parser, String jwtToken) throws AuthenticationException{
         try {
             Jwt<?, ?> jwtObject = parser.parse(jwtToken);
             Object payload = jwtObject.getPayload();
             return payload;
-        } catch (Exception e) {
-            throw new BadRequestException("JWT authentication failure");
+        } catch (ExpiredJwtException e) {
+            log.error("Expired jwt token", e);
+            throw new AuthenticationException("JWT authentication expired");
+        } catch (MalformedJwtException | SignatureException | SecurityException | IllegalArgumentException e){
+            log.error("Invalid jwt token", e);
+            throw new AuthenticationException("Invalid Jwt token");
         }
     }
 
@@ -88,20 +99,29 @@ public class SecretService {
     }
 
     private void initJwt() {
-        this.jwtExpiration = Long.parseLong(Objects.requireNonNull(environment.getProperty(Constants.JWT_EXIPIY)));
-        String jwtSecret = Objects.requireNonNull(environment.getProperty(Constants.JWT_SECRET_KEY));
-        byte[] secretBytes = Base64.getEncoder().encode(jwtSecret.getBytes());
-        this.jwtSignInKey = Keys.hmacShaKeyFor(secretBytes);
-        this.jwtParser = Jwts.parser()
-                .verifyWith(this.jwtSignInKey)
-                .build();
-        this.refreshExpiration = Long
-                .parseLong(Objects.requireNonNull(environment.getProperty(Constants.REFRESH_EXPIRY)));
+        try{
+            this.jwtExpiration = Long.parseLong(Objects.requireNonNull(environment.getProperty(Constants.JWT_EXIPIY)));
+            String jwtSecret = Objects.requireNonNull(environment.getProperty(Constants.JWT_SECRET_KEY));
+            byte[] secretBytes = Base64.getEncoder().encode(jwtSecret.getBytes());
+            this.jwtSignInKey = Keys.hmacShaKeyFor(secretBytes);
+            this.jwtParser = Jwts.parser()
+                    .verifyWith(this.jwtSignInKey)
+                    .build();
+            this.refreshExpiration = Long
+                    .parseLong(Objects.requireNonNull(environment.getProperty(Constants.REFRESH_EXPIRY)));
+            this.passwordStrength = Integer
+                    .parseInt(Objects.requireNonNull(environment.getProperty(Constants.PASSWORD_STRENGTH)));
+        }catch(WeakKeyException e){
+            log.error("Weak secret key");
+            throw new InternalException("Key exception");
+        }
+        catch(NumberFormatException e){
+            log.error("Number format exception", e);
+            throw new InternalException("Invalid number");
+        }catch(NullPointerException e){
+            log.error("Null pointer exception", e);
+            throw new InternalException("Null pointer exception");
+        }
+       
     }
-
-    private void initPasswordConfig() {
-        this.passwordStrength = Integer
-                .parseInt(Objects.requireNonNull(environment.getProperty(Constants.PASSWORD_STRENGTH)));
-    }
-
 }

@@ -4,6 +4,8 @@ import java.util.UUID;
 
 public interface AuthInfo {
     UUID getId();
+
     String getEmail();
+
     String getPassword();
 }

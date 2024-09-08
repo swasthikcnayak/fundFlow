@@ -17,18 +17,16 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name="refresh_token")
+@Table(name = "refresh_token")
 public class RefreshToken {
 
     @Id
-    @Length(max = 300) 
-    @Column(name="REFRESH_TOKEN", unique = true, nullable = false)
+    @Column(name = "REFRESH_TOKEN", unique = true, nullable = false)
     private String token;
 
-
-    @Column(name="USER_ID", nullable = false)
+    @Column(name = "USER_ID", nullable = false)
     private UUID id;
 
-    @Column(name="EXPIRY", nullable = false)
+    @Column(name = "EXPIRY", nullable = false)
     private Date expiry;
 }

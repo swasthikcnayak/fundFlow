@@ -24,9 +24,9 @@ public class ObjectUtils {
     public TokenResource getTokenResource(Map<String, Object> claims) {
         return TokenResource.builder()
                 .email((String) claims.get(Constants.EMAIL_TOKEN))
-                .expiry(new Date(((Long)claims.get(Constants.EXPIRY_TOKEN))*1000))
+                .expiry(new Date(((Long) claims.get(Constants.EXPIRY_TOKEN)) * 1000))
                 .id((String) claims.get(Constants.SUBJECT_TOKEN))
-                .issuedAt(new Date(((Long)claims.get(Constants.ISSUED_AT_TOKEN))*1000))
+                .issuedAt(new Date(((Long) claims.get(Constants.ISSUED_AT_TOKEN)) * 1000))
                 .build();
     }
 
@@ -38,8 +38,7 @@ public class ObjectUtils {
         return map;
     }
 
-
-    public String preprocessToken(String token){
+    public String preprocessToken(String token) {
         if (token == null || token.isEmpty()) {
             throw new BadRequestException("Token cannot be empty");
         }
