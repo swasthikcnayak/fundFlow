@@ -31,9 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class SecretService {
-
-    private Environment environment;
-
     private JwtParser jwtParser;
 
     private SecretKey jwtSignInKey;
@@ -45,8 +42,7 @@ public class SecretService {
     private long refreshExpiration;
 
     public SecretService(Environment environment) {
-        this.environment = environment;
-        this.initJwt();
+        this.initJwt(environment);
     }
 
     public Object extractJwt(String token) throws AuthenticationException {
@@ -74,8 +70,7 @@ public class SecretService {
     private Object extractToken(JwtParser parser, String jwtToken) throws AuthenticationException{
         try {
             Jwt<?, ?> jwtObject = parser.parse(jwtToken);
-            Object payload = jwtObject.getPayload();
-            return payload;
+            return jwtObject.getPayload();
         } catch (ExpiredJwtException e) {
             log.error("Expired jwt token", e);
             throw new AuthenticationException("JWT authentication expired");
@@ -88,8 +83,7 @@ public class SecretService {
     public String getPasswordHash(String password) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(this.passwordStrength,
                 new SecureRandom());
-        String encodedPassword = bCryptPasswordEncoder.encode(password);
-        return encodedPassword;
+        return bCryptPasswordEncoder.encode(password);
     }
 
     public boolean comparePassword(String password, String hash) {
@@ -98,7 +92,7 @@ public class SecretService {
         return bCryptPasswordEncoder.matches(password, hash);
     }
 
-    private void initJwt() {
+    private void initJwt(Environment environment) {
         try{
             this.jwtExpiration = Long.parseLong(Objects.requireNonNull(environment.getProperty(Constants.JWT_EXIPIY)));
             String jwtSecret = Objects.requireNonNull(environment.getProperty(Constants.JWT_SECRET_KEY));

@@ -2,8 +2,6 @@ package com.fundflow.authorization.services;
 
 import java.util.Date;
 import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fundflow.authorization.dao.User;
@@ -25,56 +23,60 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class AuthService {
-    @Autowired
     private SecretService secretService;
-
-    @Autowired
     private UserRepository userRepository;
-
-    @Autowired
     private ObjectUtils objectUtils;
-
-    @Autowired
     private TokenService tokenService;
+    private VerificationService verificationService;
+
+    public AuthService(SecretService secretService, UserRepository userRepository, ObjectUtils objectUtils,
+            TokenService tokenService, VerificationService verificationService) {
+        this.secretService = secretService;
+        this.userRepository = userRepository;
+        this.objectUtils = objectUtils;
+        this.tokenService = tokenService;
+        this.verificationService = verificationService;
+    }
 
     public void register(UserRegistrationRequest registrationRequest) throws BadRequestException {
         String passwordHash = this.secretService.getPasswordHash(registrationRequest.getPassword());
         User user = User.builder()
-            .email(registrationRequest.getEmail().toLowerCase())
-            .password(passwordHash)
-            .build();
-        try{ 
+                .email(registrationRequest.getEmail().toLowerCase())
+                .password(passwordHash)
+                .build();
+        try {
             user = this.userRepository.save(user);
-        }catch(Exception e){
+            verificationService.triggerVerification(user);
+        } catch (Exception e) {
             log.error("Account already exists", e);
             throw new BadRequestException("Account already exists");
         }
     }
 
-    public LoginResource login(UserLoginRequest userLoginRequest) throws AuthenticationException{
+    public LoginResource login(UserLoginRequest userLoginRequest) throws AuthenticationException {
         AuthInfo auth = userRepository.findOneByEmailAndIsVerified(userLoginRequest.getEmail(), true);
-        if(auth == null){
+        if (auth == null) {
             log.warn("AuthInfo not found");
             throw new AuthenticationException("Wrong email/password or email not verified");
         }
         boolean isValid = secretService.comparePassword(userLoginRequest.getPassword(), auth.getPassword());
-        if(isValid == false){
+        if (!isValid) {
             log.warn("Password mismatch");
             throw new AuthenticationException("Wrong email/password");
         }
         Map<String, Object> claims = objectUtils.getClaims(auth.getEmail());
-        JWTResource jwtResource = secretService.generateToken(auth.getId().toString(),claims);
+        JWTResource jwtResource = secretService.generateToken(auth.getId().toString(), claims);
         tokenService.saveRefreshToken(jwtResource, auth);
-        return new LoginResource(auth.getEmail(), jwtResource.getToken(), jwtResource.getRefreshToken().toString());
+        return new LoginResource(auth.getEmail(), jwtResource.getToken(), jwtResource.getRefreshToken());
     }
 
     public TokenResource validateToken(String token) throws BadRequestException, AuthenticationException {
         token = objectUtils.preprocessToken(token);
         Object payload = secretService.extractJwt(token);
         if (payload instanceof Claims) {
-            TokenResource tokenResource = objectUtils.getTokenResource(objectUtils.getMapFromClaims((Claims)payload));
-            if(tokenResource.getExpiry().before(new Date())){
-                log.error("Expired taken expiry date: "+tokenResource.getExpiry());
+            TokenResource tokenResource = objectUtils.getTokenResource(objectUtils.getMapFromClaims((Claims) payload));
+            if (tokenResource.getExpiry().before(new Date())) {
+                log.error("Expired taken expiry date: " + tokenResource.getExpiry());
                 throw new AuthenticationException("Expired token");
             }
             return tokenResource;
@@ -83,9 +85,10 @@ public class AuthService {
         throw new BadRequestException("Invalid token");
     }
 
-    public RefreshResponse refreshToken(String token, String refreshToken) throws BadRequestException, AuthenticationException {
+    public RefreshResponse refreshToken(String token, String refreshToken)
+            throws BadRequestException, AuthenticationException {
         TokenResource tokenResource = this.validateToken(token);
-        if(tokenService.verifyRefreshToken(tokenResource.getId(), refreshToken)){
+        if (tokenService.verifyRefreshToken(tokenResource.getId(), refreshToken)) {
             Map<String, Object> claims = objectUtils.getClaims(tokenResource.getEmail());
             JWTResource jwtResource = secretService.generateToken(tokenResource.getId(), claims);
             return new RefreshResponse(tokenResource.getId(), jwtResource.getToken());

@@ -12,6 +12,7 @@ import com.fundflow.authorization.utils.errors.AlreadyExistsException;
 import com.fundflow.authorization.utils.errors.AuthenticationException;
 import com.fundflow.authorization.utils.errors.BadRequestException;
 import com.fundflow.authorization.utils.errors.InternalException;
+import com.fundflow.authorization.utils.errors.NotFoundException;
 
 import jakarta.validation.ValidationException;
 
@@ -55,6 +56,14 @@ public class ExceptionResponseHandler extends ResponseEntityExceptionHandler {
       AlreadyExistsException ex, WebRequest request) {
     ErrorResponse error = ErrorResponse.builder().statusCode(HttpStatus.CONFLICT.value())
         .message(ErrorMessages.CONFLICT).extraMessage(ex.getMessage()).build();
+    return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler(value = NotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleNotFoundException(
+      NotFoundException ex, WebRequest request) {
+    ErrorResponse error = ErrorResponse.builder().statusCode(HttpStatus.NOT_FOUND.value())
+        .message(ErrorMessages.NOT_FOUND).extraMessage(ex.getMessage()).build();
     return new ResponseEntity<>(error, HttpStatus.CONFLICT);
   }
 }

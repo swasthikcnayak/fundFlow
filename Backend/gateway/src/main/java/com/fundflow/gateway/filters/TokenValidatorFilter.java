@@ -1,6 +1,5 @@
 package com.fundflow.gateway.filters;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
@@ -26,12 +25,12 @@ public class TokenValidatorFilter extends AbstractGatewayFilterFactory<TokenVali
 
     private WebClient.Builder webClientBuilder;
 
-    @Autowired
     private ObjectMapper objectMapper;
 
-    public TokenValidatorFilter(WebClient.Builder webClientBuilder) {
+    public TokenValidatorFilter(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         super(Config.class);
         this.webClientBuilder = webClientBuilder;
+        this.objectMapper = objectMapper;
     }
 
     public static class Config {
@@ -66,9 +65,9 @@ public class TokenValidatorFilter extends AbstractGatewayFilterFactory<TokenVali
                                 .build();
                         return chain.filter(exchange.mutate().request(modifiedRequest).build());
                     })
-                    .onErrorResume(ErrorResponseException.class, error -> {
-                        return handleError(error, exchange);
-                    });
+                    .onErrorResume(ErrorResponseException.class, error -> 
+                         handleError(error, exchange)
+                    );
         };
     }
 

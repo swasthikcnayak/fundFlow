@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fundflow.authorization.dao.RefreshToken;
@@ -20,16 +19,20 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class TokenService {
 
-    @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+
+    public TokenService(RefreshTokenRepository refreshTokenRepository) {
+        this.refreshTokenRepository = refreshTokenRepository;
+    }
 
     public void saveRefreshToken(JWTResource jwtResource, AuthInfo authInfo) {
         CompletableFuture<Void> tokenSaveFuture = CompletableFuture.runAsync(() -> {
-            RefreshToken token = new RefreshToken(jwtResource.getRefreshToken().toString(), authInfo.getId(),
+            RefreshToken token = new RefreshToken(jwtResource.getRefreshToken(), authInfo.getId(),
                     jwtResource.getRefreshTokenExpiry());
             refreshTokenRepository.save(token);
         });
-        tokenSaveFuture = tokenSaveFuture.exceptionally((ex) -> {
+        tokenSaveFuture.exceptionally(ex -> {
+            log.error("Failed to save refresh token", ex);
             throw new InternalServerErrorException(ex);
         });
     }
@@ -37,12 +40,13 @@ public class TokenService {
     public boolean verifyRefreshToken(String authUserId, String refreshToken) {
         Optional<RefreshToken> dbToken = refreshTokenRepository.findById(refreshToken);
         if (!dbToken.isPresent()) {
+            log.warn("Refresh token not found in db "+refreshToken);
             throw new AuthenticationException("Invalid refresh token");
         }
-        UUID userId = dbToken.get().getId();
+        UUID userId = dbToken.get().getUserId();
         Date expiry = dbToken.get().getExpiry();
         if (!userId.toString().equals(authUserId)) {
-            log.error("Refresh Token ownership is invalid");
+            log.error("Refresh Token ownership is invalid "+userId+" "+authUserId);
             throw new AuthenticationException("Token ownership is invalid");
         }
         if (expiry.before(new Date())) {

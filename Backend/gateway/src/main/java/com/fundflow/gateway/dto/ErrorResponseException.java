@@ -7,10 +7,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class ErrorResponseException extends Throwable {
-    private int statusCode;
-    private String message;
-    private String extraMessage;
+public class ErrorResponseException extends Exception {
+    private final int statusCode;
+    private final String message;
+    private final String extraMessage;
 
     public ErrorResponseException(ErrorResponseException e) {
         this.statusCode = e.statusCode;
